@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧮 Smart Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Consolas&family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS (style.css content) */
+        :root {
+            --bg-dark: #1e1f29;
+            --bg-medium: #282a36;
+            --bg-light: #44475a;
+            --text-white: #f8f8f2;
+            --text-yellow: #ffdd57;
+            --text-blue: #8be9fd;
+            --text-pink: #ff79c6;
+            --btn-green: #50fa7b;
+            --btn-purple: #bd93f9;
+            --border-color: #6272a4; /* A slightly lighter dark grey-blue for borders */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-dark);
+            padding: 20px;
+            overflow-y: auto; /* Allow scrolling on smaller screens if content overflows */
+        }
+
+        .calculator-container {
+            background-color: var(--bg-medium);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            width: 100%;
+            max-width: 420px; /* Matching Tkinter width */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--text-yellow);
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .display {
+            width: 100%;
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: 'Consolas', monospace;
+            font-size: 2em;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: right;
+            border: 1px solid var(--border-color);
+            min-height: 60px; /* Ensure consistent height */
+            word-break: break-all; /* Break long words */
+            overflow-x: auto; /* Allow horizontal scrolling for long expressions */
+            white-space: nowrap; /* Prevent wrapping */
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: var(--bg-light);
+            color: var(--text-white);
+            border: none;
+            border-radius: 8px;
+            padding: 15px 0;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60px; /* Ensure buttons have minimum height */
+        }
+
+        .btn:hover {
+            background-color: #6272a4; /* Slightly lighter on hover */
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn.operator {
+            background-color: #bd93f9; /* Purple */
+        }
+        .btn.equals {
+            background-color: #50fa7b; /* Green */
+            font-weight: bold;
+        }
+        .btn.clear {
+            background-color: #ff6961; /* Reddish */
+        }
+        .btn.fact {
+            background-color: #ff79c6; /* Pink */
+        }
+
+        /* Section Headers */
+        h2 {
+            font-size: 1.8rem;
+            color: var(--text-blue);
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        /* Currency Converter */
+        .currency-converter {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--bg-medium);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .currency-converter input[type="number"],
+        .currency-converter select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-size: 1em;
+            flex-grow: 1; /* Allow inputs to grow */
+            min-width: 100px; /* Minimum width for inputs */
+        }
+        .currency-converter select {
+            -webkit-appearance: none; /* Remove default arrow on select */
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%23f8f8f2" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 8px top 50%;
+            background-size: 16px 16px;
+            padding-right: 30px; /* Space for the custom arrow */
+        }
+
+        .currency-converter span.arrow {
+            color: var(--text-white);
+            font-size: 1.5em;
+            margin: 0 5px;
+        }
+
+        .currency-converter .btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: var(--btn-green);
+            color: var(--bg-dark); /* Dark text on green button */
+        }
+
+        /* Age Calculator */
+        .age-calculator {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: var(--bg-medium);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .age-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .age-inputs div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .age-inputs label {
+            color: var(--text-white);
+            font-size: 0.9em;
+        }
+
+        .age-inputs input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-size: 1em;
+            text-align: center;
+            width: 80px; /* Fixed width for date inputs */
+        }
+
+        .age-calculator .btn {
+            background-color: var(--btn-purple);
+            color: var(--text-white);
+            font-size: 1.1em;
+            padding: 12px 20px;
+        }
+
+        /* Custom Alert/Info Box */
+        .custom-message-box {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .message-content {
+            background-color: var(--bg-medium);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+        }
+
+        .message-content h3 {
+            color: var(--text-yellow);
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .message-content p {
+            color: var(--text-white);
+            font-size: 1.2em;
+            margin-bottom: 25px;
+        }
+
+        .message-content button {
+            background-color: var(--btn-green);
+            color: var(--bg-dark);
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .message-content button:hover {
+            background-color: #69ff8c;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .calculator-container {
+                padding: 15px;
+                gap: 15px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .display {
+                font-size: 1.8em;
+                padding: 10px;
+            }
+            .btn {
+                font-size: 1.2em;
+                padding: 12px 0;
+                min-height: 50px;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .currency-converter input,
+            .currency-converter select,
+            .currency-converter .btn {
+                width: 100%; /* Stack elements vertically */
+                flex-grow: unset;
+            }
+            .currency-converter span.arrow {
+                display: none; /* Hide arrow when stacked */
+            }
+            .age-inputs input {
+                width: 70px;
+            }
+            .message-content {
+                padding: 20px;
+            }
+            .message-content h3 {
+                font-size: 1.5em;
+            }
+            .message-content p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>🧮 Smart Calculator</h1>
+
+        <!-- Main Calculator Section -->
+        <div class="calculator-main">
+            <div id="expression-display" class="display">0</div>
+            <div class="buttons-grid">
+                <button class="btn" onclick="add_to_expression('7')">7</button>
+                <button class="btn" onclick="add_to_expression('8')">8</button>
+                <button class="btn" onclick="add_to_expression('9')">9</button>
+                <button class="btn operator" onclick="add_to_expression('/')">/</button>
+
+                <button class="btn" onclick="add_to_expression('4')">4</button>
+                <button class="btn" onclick="add_to_expression('5')">5</button>
+                <button class="btn" onclick="add_to_expression('6')">6</button>
+                <button class="btn operator" onclick="add_to_expression('*')">*</button>
+
+                <button class="btn" onclick="add_to_expression('1')">1</button>
+                <button class="btn" onclick="add_to_expression('2')">2</button>
+                <button class="btn" onclick="add_to_expression('3')">3</button>
+                <button class="btn operator" onclick="add_to_expression('-')">-</button>
+
+                <button class="btn" onclick="add_to_expression('0')">0</button>
+                <button class="btn" onclick="add_to_expression('.')">.</button>
+                <button class="btn operator" onclick="add_to_expression('%')">%</button>
+                <button class="btn operator" onclick="add_to_expression('+')">+</button>
+
+                <button class="btn operator" onclick="add_to_expression('**')">x<sup>y</sup></button>
+                <button class="btn clear" onclick="clear_expression()">C</button>
+                <button class="btn equals" onclick="calculate()">=</button>
+                <button class="btn fact" onclick="show_fact()"><i class="fas fa-lightbulb"></i> Fact</button>
+            </div>
+        </div>
+
+        <!-- Currency Converter Section -->
+        <h2>Currency Converter</h2>
+        <div class="currency-converter">
+            <input type="number" id="conv-amount" placeholder="Amount" value="100">
+            <select id="conv-from">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="INR" selected>INR</option>
+            </select>
+            <span class="arrow">→</span>
+            <select id="conv-to">
+                <option value="USD" selected>USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="INR">INR</option>
+            </select>
+            <button class="btn" onclick="convert_currency()">Convert</button>
+        </div>
+
+        <!-- Age Calculator Section -->
+        <h2>Age Calculator</h2>
+        <div class="age-calculator">
+            <p style="color: var(--text-white); text-align: center; font-size: 0.95em;">(Enter numbers manually for Year, Month, Day)</p>
+            <div class="age-inputs">
+                <div>
+                    <label for="age-year">Year</label>
+                    <input type="number" id="age-year" placeholder="YYYY" min="1900" max="2100">
+                </div>
+                <div>
+                    <label for="age-month">Month</label>
+                    <input type="number" id="age-month" placeholder="MM" min="1" max="12">
+                </div>
+                <div>
+                    <label for="age-day">Day</label>
+                    <input type="number" id="age-day" placeholder="DD" min="1" max="31">
+                </div>
+            </div>
+            <button class="btn" onclick="calc_age()"><i class="fas fa-birthday-cake"></i> Calculate Age</button>
+        </div>
+    </div>
+
+    <!-- Custom Message Box for alerts/info -->
+    <div id="custom-message-box" class="custom-message-box">
+        <div class="message-content">
+            <h3 id="message-box-title"></h3>
+            <p id="message-box-text"></p>
+            <button onclick="hideMessageBox()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript (script content)
+        const expressionDisplay = document.getElementById('expression-display');
+        let currentExpression = '';
+        const MATH_FACTS = [
+            "Zero is the only number that cannot be represented by Roman numerals.",
+            "A 'jiffy' is an actual unit of time: 1/100th of a second.",
+            "The number 'e' is as important as π in mathematics.",
+            "111,111,111 × 111,111,111 = 12,345,678,987,654,321",
+            "A googol is 1 followed by 100 zeros."
+        ];
+
+        // Currency exchange rates
+        const RATES = {
+            "USD": {"EUR": 0.91, "GBP": 0.78, "INR": 83.1, "USD": 1},
+            "EUR": {"USD": 1.1, "GBP": 0.86, "INR": 91.4, "EUR": 1},
+            "GBP": {"USD": 1.28, "EUR": 1.16, "INR": 106.3, "GBP": 1},
+            "INR": {"USD": 0.012, "EUR": 0.011, "GBP": 0.0094, "INR": 1}
+        };
+
+        // Custom Message Box functions (replacing Tkinter messagebox)
+        const msgBox = document.getElementById('custom-message-box');
+        const msgBoxTitle = document.getElementById('message-box-title');
+        const msgBoxText = document.getElementById('message-box-text');
+
+        function showMessageBox(title, message) {
+            msgBoxTitle.textContent = title;
+            msgBoxText.textContent = message;
+            msgBox.style.display = 'flex';
+        }
+
+        function hideMessageBox() {
+            msgBox.style.display = 'none';
+        }
+
+        // Calculator functions
+        function add_to_expression(symbol) {
+            if (expressionDisplay.textContent === '0' && symbol !== '.' && symbol !== '**' && !isNaN(symbol)) {
+                currentExpression = symbol;
+            } else {
+                currentExpression += symbol;
+            }
+            expressionDisplay.textContent = currentExpression;
+        }
+
+        function clear_expression() {
+            currentExpression = '';
+            expressionDisplay.textContent = '0';
+        }
+
+        function calculate() {
+            try {
+                // Replace '^' with '**' for exponentiation if accidentally used
+                let expressionToEvaluate = currentExpression.replace(/\^/g, '**');
+                // Ensure percentage is handled correctly, e.g., '50%' as '*0.5'
+                // This is a basic handling; for complex cases, a parser would be needed.
+                expressionToEvaluate = expressionToEvaluate.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
+
+                const result = eval(expressionToEvaluate);
+                currentExpression = result.toString();
+                expressionDisplay.textContent = currentExpression;
+            } catch (e) {
+                showMessageBox("Error", "Invalid Expression");
+                currentExpression = ''; // Clear expression on error
+                expressionDisplay.textContent = '0';
+            }
+        }
+
+        function show_fact() {
+            showMessageBox("Math Fact", MATH_FACTS[Math.floor(Math.random() * MATH_FACTS.length)]);
+        }
+
+        // Currency Converter functions
+        function convert_currency() {
+            const amountInput = document.getElementById('conv-amount');
+            const fromCur = document.getElementById('conv-from').value;
+            const toCur = document.getElementById('conv-to').value;
+
+            try {
+                const amount = parseFloat(amountInput.value);
+                if (isNaN(amount)) {
+                    showMessageBox("Error", "Enter a valid amount.");
+                    return;
+                }
+
+                if (fromCur === toCur) {
+                    showMessageBox("Result", `${amount} ${fromCur} = ${amount} ${toCur}`);
+                    return;
+                }
+
+                // Check if conversion rate exists
+                if (RATES[fromCur] && RATES[fromCur][toCur]) {
+                    const converted = amount * RATES[fromCur][toCur];
+                    showMessageBox("Result", `${amount} ${fromCur} = ${converted.toFixed(2)} ${toCur}`);
+                } else {
+                    showMessageBox("Error", "Conversion rate not available for selected currencies.");
+                }
+            } catch (e) {
+                showMessageBox("Error", "An unexpected error occurred during conversion.");
+            }
+        }
+
+        // Age Calculator functions
+        function calc_age() {
+            const yearEntry = document.getElementById('age-year');
+            const monthEntry = document.getElementById('age-month');
+            const dayEntry = document.getElementById('age-day');
+
+            try {
+                const year = parseInt(yearEntry.value);
+                const month = parseInt(monthEntry.value);
+                const day = parseInt(dayEntry.value);
+
+                if (isNaN(year) || isNaN(month) || isNaN(day)) {
+                    showMessageBox("Error", "Year, month, and day must be valid numbers.");
+                    return;
+                }
+
+                if (month < 1 || month > 12) {
+                    showMessageBox("Error", "Month must be 1-12.");
+                    return;
+                }
+                if (day < 1 || day > 31) {
+                    showMessageBox("Error", "Day must be 1-31.");
+                    return;
+                }
+
+                const dob = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
+                // Validate if the date object created is actually the date entered (handles invalid dates like Feb 30)
+                if (dob.getFullYear() !== year || dob.getMonth() !== month - 1 || dob.getDate() !== day) {
+                    showMessageBox("Error", "Invalid date (e.g., February 30th). Please check the day for the given month and year.");
+                    return;
+                }
+
+                const today = new Date();
+                if (dob > today) {
+                    showMessageBox("Error", "Date of Birth cannot be in the future.");
+                    return;
+                }
+
+                let years = today.getFullYear() - dob.getFullYear();
+                let months = today.getMonth() - dob.getMonth();
+                let days = today.getDate() - dob.getDate();
+
+                if (days < 0) {
+                    // Get days in the previous month relative to 'today'
+                    const prevMonthLastDay = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+                    days += prevMonthLastDay;
+                    months--;
+                }
+
+                if (months < 0) {
+                    months += 12;
+                    years--;
+                }
+
+                showMessageBox("Your Age", `You are ${years} years, ${months} months, and ${days} days old.`);
+
+            } catch (e) {
+                showMessageBox("Error", "An unexpected error occurred. Please ensure valid date inputs.");
+            }
+        }
+    </script>
+</body>
+</html>
